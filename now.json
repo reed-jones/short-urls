@@ -1,0 +1,3 @@
+{
+    "rewrites": [{ "source": "/go/(.*)", "destination": "/api/$1" }]
+}
