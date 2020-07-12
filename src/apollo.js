@@ -5,7 +5,10 @@ import { split } from "apollo-link";
 import { HttpLink } from "apollo-link-http";
 import { getMainDefinition } from "apollo-utilities";
 
-const headers = {'content-type': 'application/json'};
+const headers = {
+  'content-type': 'application/json',
+  'X-Hasura-Role': 'guest'
+};
 const getHeaders = () => {
   return headers;
 };

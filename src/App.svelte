@@ -1,25 +1,36 @@
 <script>
-	import ApolloClient from 'apollo-client';
+	import { mutate, subscribe } from 'svelte-apollo';
 	import { client } from './apollo';
-	import { setClient, getClient, query, mutate, subscribe } from 'svelte-apollo';
 	import { LINK_LIST, ADD_LINK, REMOVE_LINK, LINK_SUBSCRIPTION } from './queries'
-	import { makeId, resolveLink } from './utils'
+	import { makeId, resolveLink, copyLink, stringify, parse } from './utils'
+	import InlineButton from './InlineButton'
 
-	setClient(client);
+	const form = {
+		url: '',
+		name: '',
+	}
+	const saved = parse(localStorage.getItem('saved_links')) || []
 
-	const links = subscribe(client, { query: LINK_SUBSCRIPTION });
+	// Fetch data & subscribe to updates
+	const links = subscribe(client, {
+		query: LINK_SUBSCRIPTION
+	});
 
-	let url = '';
-	let name = ''
-	const submitForm = async () => {
-		await mutate(client, {
+	const addLink = async () => {
+		const { data } = await mutate(client, {
 			mutation: ADD_LINK,
-			variables: { name, full: url, short: makeId(6) }
+			variables: { name: form.name, full: form.url, short: makeId(6) }
 		});
 
+		// cache locally
+		localStorage.setItem(
+			'saved_links',
+			stringify((saved.push(data.insert_links_one.short), saved))
+		)
+
 		// Reset
-		url = ''
-		name = ''
+		form.url = ''
+		form.name = ''
 	}
 
 	const removeLink = async ({ short }) => {
@@ -31,13 +42,15 @@
 </script>
 
 <style>
+:root {
+	--neomorphic-shadow: 11px 11px 22px #3e4757,
+			 -11px -11px 22px #566379;
+}
 .text-shadow {
-	text-shadow: 11px 11px 22px #3e4757,
-             -11px -11px 22px #566379;
+	text-shadow: var(--neomorphic-shadow)
 }
 .box-shadow {
-	box-shadow: 11px 11px 22px #3e4757,
-             -11px -11px 22px #566379;
+	box-shadow: var(--neomorphic-shadow)
 }
 </style>
 
@@ -49,12 +62,12 @@
 			<h1 class="text-10rem md:text-16rem font-black text-gray-700 w-full text-center text-shadow -my-24">URL</h1>
 
 			<!-- New Submission Form -->
-			<form class="flex flex-wrap md:flex-no-wrap my-16 px-8 md:px-0" on:submit|preventDefault={submitForm}>
+			<form class="flex flex-wrap md:flex-no-wrap my-16 px-8 md:px-0" on:submit|preventDefault={addLink}>
 				<div class="w-full md:w-40 md:mr-8 mb-8 md:mb-0">
-					<input required class="bg-gray-700 box-shadow text-gray-500 outline-none border border-transparent focus:border-gray-600 rounded px-4 py-2 w-full" type="text" placeholder="My Site" bind:value={name} />
+					<input required class="bg-gray-700 box-shadow text-gray-500 outline-none border border-transparent focus:border-gray-600 rounded px-4 py-2 w-full" type="text" placeholder="My Site" bind:value={form.name} />
 				</div>
 				<div class="flex w-full flex-wrap md:flex-no-wrap ">
-					<input required class="mb-8 md:mb-0 bg-gray-700 box-shadow text-gray-500 outline-none border border-transparent focus:border-gray-600 rounded px-4 py-2 w-full" type="text" placeholder="example.com" bind:value={url} />
+					<input pattern="https?://(.*)" required class="mb-8 md:mb-0 bg-gray-700 box-shadow text-gray-500 outline-none border border-transparent focus:border-gray-600 rounded px-4 py-2 w-full" type="text" placeholder="example.com" bind:value={form.url} />
 					<button class="w-full md:w-auto box-shadow text-gray-500 px-2 py-2 rounded md:ml-8 focus:outline-none outline-none border border-transparent focus:border-gray-600 hover:bg-gray-800 hover:bg-opacity-25">Save</button>
 				</div>
 			</form>
@@ -73,24 +86,29 @@
 							</div>
 
 							<div class="flex flex-wrap w-full flex-1">
-								<div class="w-full leading-loose pb-2"><span class="hidden md:inline text-gray-500 text-opacity-75 text-sm">{resolveLink(link).base}</span><span class="text-gray-500 italic border-b pb-1 border-gray-600 md:px-1 mx-8 md:mx-0 text-lg md:text-base">{resolveLink(link).code}</span></div>
+								<div class="w-full leading-loose pb-2">
+									<span class="hidden md:inline text-gray-500 text-opacity-75 text-sm">{resolveLink(link).base}</span>
+									<span class="text-gray-500 italic border-b pb-1 border-gray-600 md:px-1 mx-8 md:mx-0 text-lg md:text-base">{resolveLink(link).code}</span>
+								</div>
+
 								<div class="w-full text-gray-600 text-xs leading-none pb-2 mx-8 md:mx-0">{link.full}</div>
 							</div>
 						</a>
 
 						<div class="flex justify-between w-full md:w-auto md:border-none border-t border-opacity-25 border-gray-600">
-							<button class="p-4 transition duration-150 bg-gray-700 hover:bg-gray-800 hover:bg-opacity-25 cursor-not-allowed">
-								<span class="py-2 px-4 text-green-600 md:border-l border-green-600 my-2 border-opacity-50">Copy</span>
-							</button>
-							<button class="p-4 transition duration-150 bg-gray-700 hover:bg-gray-800 hover:bg-opacity-25" on:click={removeLink(link)}>
-								<span class="py-2 px-4 text-red-500 md:border-l border-red-500 my-2 border-opacity-50">Delete</span>
-							</button>
+							<InlineButton color="text-red-500 border-red-500" show={saved.includes(link.short)} on:click={removeLink(link)}>
+								Delete
+							</InlineButton>
+
+							<InlineButton color="text-green-600 border-green-600" on:click={copyLink(link)}>
+								Copy
+							</InlineButton>
 						</div>
 					</li>
 				{/each}
 
 			{:catch error}
-				<li class="py-40 flex justify-center text-gray-500">Error loading links: {error}</li>
+				<li class="py-40 flex justify-center text-gray-500">Error loading links: {stringify(error)}</li>
 			{/await}
 			</ul>
 		</div>
