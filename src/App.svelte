@@ -13,7 +13,11 @@
 	// Fetch data & subscribe to updates
 	const links = subscribe(client, {
 		query: LINK_SUBSCRIPTION,
-		variables: { user_fingerprint }
+		variables: {
+			order_by: [{ id: "desc" }],
+			limit: 5,
+			user_fingerprint
+		}
 	});
 
 	const addLink = async () => {
