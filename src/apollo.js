@@ -4,11 +4,17 @@ import { WebSocketLink } from "apollo-link-ws";
 import { split } from "apollo-link";
 import { HttpLink } from "apollo-link-http";
 import { getMainDefinition } from "apollo-utilities";
+import { fingerprint } from './utils'
+
+
+export const user_fingerprint = fingerprint.get()
 
 const headers = {
   'content-type': 'application/json',
-  'X-Hasura-Role': 'guest'
+  'X-Hasura-Role': 'guest',
+  'X-Hasura-User-Uuid': user_fingerprint
 };
+
 const getHeaders = () => {
   return headers;
 };

@@ -1,19 +1,19 @@
 <script>
 	import { mutate, subscribe } from 'svelte-apollo';
-	import { client } from './apollo';
-	import { LINK_LIST, ADD_LINK, REMOVE_LINK, LINK_SUBSCRIPTION } from './queries'
-	import { makeId, resolveLink, copyLink, stringify, parse } from './utils'
+	import { client, user_fingerprint } from './apollo';
+	import { ADD_LINK, REMOVE_LINK, LINK_SUBSCRIPTION } from './queries'
+	import { makeId, resolveLink, copyLink, stringify, parse, fingerprint } from './utils'
 	import InlineButton from './InlineButton'
 
 	const form = {
 		url: '',
 		name: '',
 	}
-	const saved = parse(localStorage.getItem('saved_links')) || []
 
 	// Fetch data & subscribe to updates
 	const links = subscribe(client, {
-		query: LINK_SUBSCRIPTION
+		query: LINK_SUBSCRIPTION,
+		variables: { user_fingerprint }
 	});
 
 	const addLink = async () => {
@@ -22,19 +22,13 @@
 			variables: { name: form.name, full: form.url, short: makeId(6) }
 		});
 
-		// cache locally
-		localStorage.setItem(
-			'saved_links',
-			stringify((saved.push(data.insert_links_one.short), saved))
-		)
-
 		// Reset
 		form.url = ''
 		form.name = ''
 	}
 
 	const removeLink = async ({ short }) => {
-		await mutate(client, {
+		const { data } = await mutate(client, {
 			mutation: REMOVE_LINK,
 			variables: { short }
 		});
@@ -96,7 +90,7 @@
 						</a>
 
 						<div class="flex justify-between w-full md:w-auto md:border-none border-t border-opacity-25 border-gray-600">
-							<InlineButton color="text-red-500 border-red-500" show={saved.includes(link.short)} on:click={removeLink(link)}>
+							<InlineButton color="text-red-500 border-red-500" show={link.is_owned} on:click={removeLink(link)}>
 								Delete
 							</InlineButton>
 

@@ -1,21 +1,12 @@
 import gql from 'graphql-tag';
 
-export const LINK_LIST = gql`
-	query {
-	  links(order_by: [{name: asc}]) {
-		name,
-		full,
-		short
-	  }
-	}
-  `;
 export const ADD_LINK = gql`
-	mutation ($name: String!, $full: String!, $short: String!) {
+	mutation InsertLink($name: String!, $full: String!, $short: String!) {
 		insert_links_one(object: {full: $full, name: $name, short: $short}) {
-			short
+			id
 		}
 	}
-  `;
+`;
 export const REMOVE_LINK = gql`
 	mutation($short: String!) {
 	  delete_links(where: { short: { _eq: $short } }) {
@@ -25,11 +16,12 @@ export const REMOVE_LINK = gql`
   `;
 
 export const LINK_SUBSCRIPTION = gql`
-	subscription {
+	subscription($user_fingerprint: uuid!) {
 		links(order_by: [{id: desc}], limit: 5) {
-			name,
-			full,
+			name
+			full
 			short
+			is_owned(args: {user_fingerprint: $user_fingerprint})
 		}
 	}
   `;
