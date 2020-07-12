@@ -3,7 +3,7 @@ const https = require('https');
 const client = (query, variables = {}) => new Promise((resolve, reject) => {
 const data = JSON.stringify({ query, variables })
 const options = {
-    hostname: process.env.SNOWPACK_PUBLIC_HOSTNAME,
+    hostname: process.env.SNOWPACK_PUBLIC_GRAPHQL_HOSTNAME,
     path: process.env.SNOWPACK_PUBLIC_GRAPHQL_PATH,
     method: 'POST',
     headers: {

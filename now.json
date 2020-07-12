@@ -1,3 +1,11 @@
 {
-    "rewrites": [{ "source": "/go/(.*)", "destination": "/api/$1" }]
+    "rewrites": [
+        { "source": "/(.*)", "destination": "/api/redirects/$1" }
+    ],
+    "env": {
+        "SNOWPACK_PUBLIC_GRAPHQL_WS_URL": "@snowpack-public-graphql-ws-url-production-gb24",
+        "SNOWPACK_PUBLIC_GRAPHQL_HTTP_URL": "@snowpack-public-graphql-http-url-production-8l7r",
+        "SNOWPACK_PUBLIC_GRAPHQL_PATH": "@snowpack-public-graphql-path-production-c8ib",
+        "SNOWPACK_PUBLIC_GRAPHQL_HOSTNAME": "@snowpack-public-graphql-hostname-production-8lh1"
+    }
 }
