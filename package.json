@@ -17,7 +17,7 @@
     "graphql": "^15.2.0",
     "graphql-tag": "^2.10.3",
     "subscriptions-transport-ws": "^0.9.16",
-    "svelte": "^3.21.0",
+    "svelte": "^3.49.0",
     "svelte-apollo": "^0.3.0"
   },
   "devDependencies": {
